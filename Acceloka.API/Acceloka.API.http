@@ -1,0 +1,6 @@
+@Acceloka.API_HostAddress = http://localhost:5156
+
+GET {{Acceloka.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
