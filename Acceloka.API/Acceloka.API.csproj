@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\BookTicket\" />
     <Folder Include="Features\GetBookedTicketDetail\" />
     <Folder Include="Features\EditBookedTicket\" />
     <Folder Include="Features\RevokeTicket\" />

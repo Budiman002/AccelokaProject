@@ -1,4 +1,5 @@
 ﻿using Acceloka.API.Features.GetAvailableTickets;
+using Acceloka.API.Features.BookTicket;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,6 +35,13 @@ namespace Acceloka.API.Controllers
 
             var result = await _mediator.Send(query);
 
+            return Ok(result);
+        }
+
+        [HttpPost("book-ticket")]
+        public async Task<IActionResult> BookTicket([FromBody] BookTicketCommand command)
+        {
+            var result = await _mediator.Send(command);
             return Ok(result);
         }
     }
