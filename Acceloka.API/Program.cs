@@ -1,10 +1,24 @@
 using Acceloka.API.Common;
 using Acceloka.API.Data;
+using Acceloka.API.Middleware;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
+//var builder = WebApplication.CreateBuilder(args);
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .WriteTo.File(
+        path: "logs/Log-.txt",
+        rollingInterval: RollingInterval.Day,
+        outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -28,6 +42,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+app.UseMiddleware<GlobalExceptionHandler>();
 
 // Middleware pipeline
 if (app.Environment.IsDevelopment())
@@ -54,3 +69,5 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+Log.CloseAndFlush();
