@@ -2,6 +2,7 @@
 using Acceloka.API.Features.BookTicket;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using Acceloka.API.Features.GetBookedTicketDetail;
 
 namespace Acceloka.API.Controllers
 {
@@ -42,6 +43,18 @@ namespace Acceloka.API.Controllers
         public async Task<IActionResult> BookTicket([FromBody] BookTicketCommand command)
         {
             var result = await _mediator.Send(command);
+            return Ok(result);
+        }
+
+        [HttpGet("get-booked-ticket/{bookedTicketId}")]
+        public async Task<IActionResult> GetBookedTicketDetail([FromRoute] int bookedTicketId)
+        {
+            var query = new GetBookedTicketDetailQuery
+            {
+                BookedTicketId = bookedTicketId
+            };
+
+            var result = await _mediator.Send(query);
             return Ok(result);
         }
     }
