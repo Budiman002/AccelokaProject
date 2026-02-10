@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -19,6 +19,14 @@
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Features\GetAvailableTickets\" />
+    <Folder Include="Features\BookTicket\" />
+    <Folder Include="Features\GetBookedTicketDetail\" />
+    <Folder Include="Features\EditBookedTicket\" />
+    <Folder Include="Features\RevokeTicket\" />
   </ItemGroup>
 
 </Project>
