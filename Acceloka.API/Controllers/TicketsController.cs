@@ -4,6 +4,7 @@ using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Acceloka.API.Features.GetBookedTicketDetail;
 using Acceloka.API.Features.RevokeTicket;
+using Acceloka.API.Features.EditBookedTicket;
 
 namespace Acceloka.API.Controllers
 {
@@ -75,6 +76,29 @@ namespace Acceloka.API.Controllers
             var result = await _mediator.Send(command);
 
             return Ok(result);
+        }
+
+        [HttpPut("edit-booked-ticket/{bookedTicketId}")]
+        public async Task<IActionResult> EditBookedTicket(
+            [FromRoute] int bookedTicketId,
+            [FromBody] EditBookedTicketRequest request)
+        {
+            var command = new EditBookedTicketCommand
+            {
+                BookedTicketId = bookedTicketId,
+                TicketCode = request.TicketCode,
+                NewQuantity = request.NewQuantity
+            };
+
+            var result = await _mediator.Send(command);
+
+            return Ok(result);
+        }
+
+        public class EditBookedTicketRequest
+        {
+            public string TicketCode { get; set; } = string.Empty;
+            public int NewQuantity { get; set; }
         }
     }
 }

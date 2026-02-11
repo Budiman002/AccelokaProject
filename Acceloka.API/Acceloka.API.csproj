@@ -21,8 +21,4 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.2" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Features\EditBookedTicket\" />
-  </ItemGroup>
-
 </Project>
