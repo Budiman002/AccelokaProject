@@ -23,7 +23,6 @@
 
   <ItemGroup>
     <Folder Include="Features\EditBookedTicket\" />
-    <Folder Include="Features\RevokeTicket\" />
   </ItemGroup>
 
 </Project>
