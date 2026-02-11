@@ -15,7 +15,6 @@ namespace Acceloka.API.Features.EditBookedTicket
 
         public async Task<EditBookedTicketResponse> Handle(EditBookedTicketCommand request, CancellationToken cancellationToken)
         {
-            // Validate booked ticket exists
             var bookedTicket = await _context.BookedTickets
                 .FirstOrDefaultAsync(bt => bt.Id == request.BookedTicketId, cancellationToken);
 
@@ -24,50 +23,63 @@ namespace Acceloka.API.Features.EditBookedTicket
                 throw new InvalidOperationException($"Booked ticket with ID {request.BookedTicketId} not found");
             }
 
-            
-            var bookedDetail = await _context.BookedTicketDetails
-                .FirstOrDefaultAsync(btd =>
-                    btd.BookedTicketId == request.BookedTicketId &&
-                    btd.TicketCode == request.TicketCode,
-                    cancellationToken);
+            var editedTickets = new List<EditedTicketDto>();
 
-            if (bookedDetail == null)
+            foreach (var item in request.Tickets)
             {
-                throw new InvalidOperationException($"Ticket {request.TicketCode} not found in booking {request.BookedTicketId}");
-            }
 
-            // Get ticket to adjust quota
-            var ticket = await _context.Tickets
-                .FirstOrDefaultAsync(t => t.Code == request.TicketCode, cancellationToken);
+                var bookedDetail = await _context.BookedTicketDetails
+                    .FirstOrDefaultAsync(btd =>
+                        btd.BookedTicketId == request.BookedTicketId &&
+                        btd.TicketCode == item.TicketCode,
+                        cancellationToken);
 
-            if (ticket == null)
-            {
-                throw new InvalidOperationException($"Ticket {request.TicketCode} not found");
-            }
-
-            int oldQuantity = bookedDetail.Quantity;
-            int quantityDifference = request.NewQuantity - oldQuantity;
-
-            if (quantityDifference > 0)
-            {
-                if (ticket.Quota < quantityDifference)
+                if (bookedDetail == null)
                 {
-                    throw new InvalidOperationException($"Insufficient quota. Available: {ticket.Quota}, Requested increase: {quantityDifference}");
+                    throw new InvalidOperationException($"Ticket {item.TicketCode} not found in booking {request.BookedTicketId}");
                 }
-            }
-            ticket.Quota -= quantityDifference; 
 
-            // Update booked detail quantity
-            bookedDetail.Quantity = request.NewQuantity;
+                var ticket = await _context.Tickets
+                    .Include(t => t.Category)
+                    .FirstOrDefaultAsync(t => t.Code == item.TicketCode, cancellationToken);
+
+                if (ticket == null)
+                {
+                    throw new InvalidOperationException($"Ticket {item.TicketCode} not found");
+                }
+
+                int oldQuantity = bookedDetail.Quantity;
+                int quantityDifference = item.NewQuantity - oldQuantity;
+
+
+                if (quantityDifference > 0)
+                {
+                    if (ticket.Quota < quantityDifference)
+                    {
+                        throw new InvalidOperationException($"Insufficient quota for {item.TicketCode}. Available: {ticket.Quota}, Requested increase: {quantityDifference}");
+                    }
+                }
+
+                ticket.Quota -= quantityDifference;
+
+
+                bookedDetail.Quantity = item.NewQuantity;
+
+
+                editedTickets.Add(new EditedTicketDto
+                {
+                    KodeTicket = item.TicketCode,
+                    NamaTicket = ticket.Name,
+                    NamaKategori = ticket.Category.Name,
+                    SisaQuantity = item.NewQuantity
+                });
+            }
 
             await _context.SaveChangesAsync(cancellationToken);
 
             return new EditBookedTicketResponse
             {
-                Message = $"Successfully updated {request.TicketCode} quantity from {oldQuantity} to {request.NewQuantity}",
-                OldQuantity = oldQuantity,
-                NewQuantity = request.NewQuantity,
-                QuotaAdjustment = -quantityDifference 
+                EditedTickets = editedTickets
             };
         }
     }

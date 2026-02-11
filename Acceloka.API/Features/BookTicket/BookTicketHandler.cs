@@ -1,5 +1,4 @@
 ﻿using Acceloka.API.Data;
-using Acceloka.API.Features.BookTicket;
 using Acceloka.API.Models;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -17,7 +16,6 @@ namespace Acceloka.API.Features.BookTicket
 
         public async Task<BookTicketResponse> Handle(BookTicketCommand request, CancellationToken cancellationToken)
         {
-            // Create BookedTicket (master record)
             var bookedTicket = new BookedTicket
             {
                 BookedDate = DateTime.UtcNow
@@ -26,22 +24,26 @@ namespace Acceloka.API.Features.BookTicket
             _context.BookedTickets.Add(bookedTicket);
             await _context.SaveChangesAsync(cancellationToken);
 
-            var bookedItems = new List<BookedItemDto>();
+            var bookedTicketDetails = new List<BookedTicketDetail>();
             decimal totalPrice = 0;
 
-            // Process each ticket
+            var codes = request.Tickets.Select(t => t.KodeTicket).ToList();
+
+            var ticketsWithCategories = await _context.Tickets
+                .Include(t => t.Category)
+                .Where(t => codes.Contains(t.Code))
+                .ToListAsync(cancellationToken);
+
             foreach (var item in request.Tickets)
             {
-                // Get ticket details
-                var ticket = await _context.Tickets
-                    .FirstOrDefaultAsync(t => t.Code == item.KodeTicket, cancellationToken);
+                var ticket = ticketsWithCategories.FirstOrDefault(t => t.Code == item.KodeTicket);
 
                 if (ticket == null)
                 {
                     throw new InvalidOperationException($"Ticket {item.KodeTicket} not found");
                 }
 
-                // Create BookedTicketDetail
+                
                 var bookedDetail = new BookedTicketDetail
                 {
                     BookedTicketId = bookedTicket.Id,
@@ -50,32 +52,45 @@ namespace Acceloka.API.Features.BookTicket
                 };
 
                 _context.BookedTicketDetails.Add(bookedDetail);
+                bookedTicketDetails.Add(bookedDetail);
 
-                // Update ticket quota
                 ticket.Quota -= item.Qty;
-
-                // Calculate prices
-                var subTotal = ticket.Price * item.Qty;
-                totalPrice += subTotal;
-
-                bookedItems.Add(new BookedItemDto
-                {
-                    KodeTicket = ticket.Code,
-                    NamaTicket = ticket.Name,
-                    Qty = item.Qty,
-                    PricePerTicket = ticket.Price,
-                    SubTotal = subTotal
-                });
+                totalPrice += ticket.Price * item.Qty;
             }
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            var categoryGroups = bookedTicketDetails
+                .GroupBy(btd => ticketsWithCategories.First(t => t.Code == btd.TicketCode).Category.Name)
+                .Select(g => new CategoryBookingDto
+                {
+                    CategoryName = g.Key,
+                    Tickets = g.Select(btd =>
+                    {
+                        var ticket = ticketsWithCategories.First(t => t.Code == btd.TicketCode);
+                        return new BookedItemDto
+                        {
+                            KodeTicket = btd.TicketCode,
+                            NamaTicket = ticket.Name,
+                            Qty = btd.Quantity,
+                            Price = ticket.Price,
+                            SubTotal = ticket.Price * btd.Quantity
+                        };
+                    }).ToList(),
+                    CategoryTotal = g.Sum(btd =>
+                    {
+                        var ticket = ticketsWithCategories.First(t => t.Code == btd.TicketCode);
+                        return ticket.Price * btd.Quantity;
+                    })
+                })
+                .ToList();
 
             return new BookTicketResponse
             {
                 BookedTicketId = bookedTicket.Id,
                 BookedDate = bookedTicket.BookedDate,
-                BookedTickets = bookedItems,
-                TotalPrice = totalPrice
+                Categories = categoryGroups,
+                GrandTotal = totalPrice
             };
         }
     }

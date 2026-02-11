@@ -1,6 +1,7 @@
 ﻿using Acceloka.API.Data;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens.Experimental;
 
 namespace Acceloka.API.Features.RevokeTicket
 {
@@ -15,7 +16,6 @@ namespace Acceloka.API.Features.RevokeTicket
 
         public async Task<RevokeTicketResponse> Handle(RevokeTicketCommand request, CancellationToken cancellationToken)
         {
-            // Check if booked ticket exists
             var bookedTicket = await _context.BookedTickets
                 .FirstOrDefaultAsync(bt => bt.Id == request.BookedTicketId, cancellationToken);
 
@@ -24,7 +24,6 @@ namespace Acceloka.API.Features.RevokeTicket
                 throw new InvalidOperationException($"Booked ticket with ID {request.BookedTicketId} not found");
             }
 
-            // Check if booked ticket detail exists
             var bookedDetail = await _context.BookedTicketDetails
                 .FirstOrDefaultAsync(btd =>
                     btd.BookedTicketId == request.BookedTicketId &&
@@ -36,14 +35,13 @@ namespace Acceloka.API.Features.RevokeTicket
                 throw new InvalidOperationException($"Ticket {request.TicketCode} not found in booking {request.BookedTicketId}");
             }
 
-            // Validation
             if (request.Quantity > bookedDetail.Quantity)
             {
                 throw new InvalidOperationException($"Cannot revoke {request.Quantity} tickets. Only {bookedDetail.Quantity} were booked.");
             }
 
-            // Get ticket to restore quota
             var ticket = await _context.Tickets
+                .Include(t => t.Category)
                 .FirstOrDefaultAsync(t => t.Code == request.TicketCode, cancellationToken);
 
             if (ticket == null)
@@ -53,24 +51,21 @@ namespace Acceloka.API.Features.RevokeTicket
 
             ticket.Quota += request.Quantity;
 
-            // Update or delete booked ticket detail
+            int sisaQuantity = bookedDetail.Quantity - request.Quantity;
+
             if (request.Quantity == bookedDetail.Quantity)
             {
-                // Remove entire detail
                 _context.BookedTicketDetails.Remove(bookedDetail);
             }
             else
             {
-                // Reduce quantity
                 bookedDetail.Quantity -= request.Quantity;
             }
 
-            // Check if booking has any remaining details
             var remainingDetails = await _context.BookedTicketDetails
                 .Where(btd => btd.BookedTicketId == request.BookedTicketId && btd.Id != bookedDetail.Id)
                 .AnyAsync(cancellationToken);
 
-            // If no remaining details and current detail is being removed, then delete the booking
             if (!remainingDetails && request.Quantity == bookedDetail.Quantity)
             {
                 _context.BookedTickets.Remove(bookedTicket);
@@ -80,8 +75,10 @@ namespace Acceloka.API.Features.RevokeTicket
 
             return new RevokeTicketResponse
             {
-                Message = $"Successfully revoked {request.Quantity} ticket(s) of {request.TicketCode}",
-                RestoredQuota = request.Quantity
+                KodeTicket = request.TicketCode,
+                NamaTicket = ticket.Name,
+                NamaKategori = ticket.Category.Name,
+                SisaQuantity = sisaQuantity
             };
         }
     }

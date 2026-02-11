@@ -1,6 +1,4 @@
-﻿using Acceloka.API.Features.BookTicket;
-using Acceloka.API.Models;
-using MediatR;
+﻿using MediatR;
 
 namespace Acceloka.API.Features.BookTicket
 {
@@ -19,8 +17,15 @@ namespace Acceloka.API.Features.BookTicket
     {
         public int BookedTicketId { get; set; }
         public DateTime BookedDate { get; set; }
-        public List<BookedItemDto> BookedTickets { get; set; } = new();
-        public decimal TotalPrice { get; set; }
+        public List<CategoryBookingDto> Categories { get; set; } = new();
+        public decimal GrandTotal { get; set; }
+    }
+
+    public class CategoryBookingDto
+    {
+        public string CategoryName { get; set; } = string.Empty;
+        public List<BookedItemDto> Tickets { get; set; } = new();
+        public decimal CategoryTotal { get; set; }
     }
 
     public class BookedItemDto
@@ -28,7 +33,7 @@ namespace Acceloka.API.Features.BookTicket
         public string KodeTicket { get; set; } = string.Empty;
         public string NamaTicket { get; set; } = string.Empty;
         public int Qty { get; set; }
-        public decimal PricePerTicket { get; set; }
+        public decimal Price { get; set; }
         public decimal SubTotal { get; set; }
     }
 }

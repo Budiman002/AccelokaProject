@@ -11,7 +11,9 @@ namespace Acceloka.API.Features.RevokeTicket
 
     public class RevokeTicketResponse
     {
-        public string Message { get; set; } = string.Empty;
-        public int RestoredQuota { get; set; }
+        public string KodeTicket { get; set; } = string.Empty;
+        public string NamaTicket { get; set; } = string.Empty;
+        public string NamaKategori { get; set; } = string.Empty;
+        public int SisaQuantity { get; set; }
     }
 }

@@ -4,9 +4,18 @@ namespace Acceloka.API.Features.GetAvailableTickets
 {
     public class GetAvailableTicketsQuery : IRequest<GetAvailableTicketsResponse>
     {
+        public string? NamaKategori { get; set; }
+        public string? KodeTicket { get; set; }
+        public string? NamaTicket { get; set; }
+        public decimal? Harga { get; set; }
+        public DateTime? TanggalEventMin { get; set; }
+        public DateTime? TanggalEventMax { get; set; }
+
         public string? Search { get; set; }
+
         public string? OrderBy { get; set; }
         public string? OrderState { get; set; }
+
         public int? Page { get; set; }
         public int? PageSize { get; set; }
     }

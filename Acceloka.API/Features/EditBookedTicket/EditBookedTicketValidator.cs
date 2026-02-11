@@ -10,13 +10,20 @@ namespace Acceloka.API.Features.EditBookedTicket
                 .GreaterThan(0)
                 .WithMessage("BookedTicketId must be greater than 0");
 
-            RuleFor(x => x.TicketCode)
+            RuleFor(x => x.Tickets)
                 .NotEmpty()
-                .WithMessage("TicketCode is required");
+                .WithMessage("At least one ticket must be provided");
 
-            RuleFor(x => x.NewQuantity)
-                .GreaterThan(0)
-                .WithMessage("NewQuantity must be greater than 0");
+            RuleForEach(x => x.Tickets).ChildRules(ticket =>
+            {
+                ticket.RuleFor(t => t.TicketCode)
+                    .NotEmpty()
+                    .WithMessage("TicketCode is required");
+
+                ticket.RuleFor(t => t.NewQuantity)
+                    .GreaterThan(0)
+                    .WithMessage("NewQuantity must be greater than 0");
+            });
         }
     }
 }

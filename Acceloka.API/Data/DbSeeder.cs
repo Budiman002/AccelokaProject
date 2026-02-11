@@ -7,7 +7,6 @@ namespace Acceloka.API.Data
     {
         public static void SeedData(AccelokaDbContext context)
         {
-            // Check if data already exists
             if (context.Categories.Any())
             {
                 return;
@@ -25,8 +24,6 @@ namespace Acceloka.API.Data
             context.Categories.AddRange(categories);
             context.SaveChanges();
 
-            // Seed Tickets
-            // Seed Tickets
             var tickets = new List<Ticket>
 {
     // Cinema tickets

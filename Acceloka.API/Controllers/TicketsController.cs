@@ -21,6 +21,12 @@ namespace Acceloka.API.Controllers
 
         [HttpGet("get-available-ticket")]
         public async Task<IActionResult> GetAvailableTickets(
+            [FromQuery] string? namaKategori,
+            [FromQuery] string? kodeTicket,
+            [FromQuery] string? namaTicket,
+            [FromQuery] decimal? harga,
+            [FromQuery] DateTime? tanggalEventMin,
+            [FromQuery] DateTime? tanggalEventMax,
             [FromQuery] string? search,
             [FromQuery] string? orderBy,
             [FromQuery] string? orderState,
@@ -29,6 +35,12 @@ namespace Acceloka.API.Controllers
         {
             var query = new GetAvailableTicketsQuery
             {
+                NamaKategori = namaKategori,
+                KodeTicket = kodeTicket,
+                NamaTicket = namaTicket,
+                Harga = harga,
+                TanggalEventMin = tanggalEventMin,
+                TanggalEventMax = tanggalEventMax,
                 Search = search,
                 OrderBy = orderBy,
                 OrderState = orderState,
@@ -37,7 +49,6 @@ namespace Acceloka.API.Controllers
             };
 
             var result = await _mediator.Send(query);
-
             return Ok(result);
         }
 
@@ -86,19 +97,17 @@ namespace Acceloka.API.Controllers
             var command = new EditBookedTicketCommand
             {
                 BookedTicketId = bookedTicketId,
-                TicketCode = request.TicketCode,
-                NewQuantity = request.NewQuantity
+                Tickets = request.Tickets
             };
 
             var result = await _mediator.Send(command);
 
             return Ok(result);
         }
-
+    }
         public class EditBookedTicketRequest
         {
-            public string TicketCode { get; set; } = string.Empty;
-            public int NewQuantity { get; set; }
+            public List<EditTicketItemDto> Tickets { get; set; } = new();
         }
-    }
+    
 }
