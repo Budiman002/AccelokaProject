@@ -33,7 +33,6 @@ namespace Acceloka.API.Middleware
         private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-
             var problemDetails = new ProblemDetailsResponse();
 
             if (exception is ValidationException validationException)
@@ -47,6 +46,16 @@ namespace Acceloka.API.Middleware
                         g => g.Key,
                         g => g.Select(e => e.ErrorMessage).ToArray()
                     );
+            }
+            else if (exception is InvalidOperationException invalidOpException)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+                problemDetails.Status = (int)HttpStatusCode.BadRequest;
+                problemDetails.Title = "Bad Request";
+                problemDetails.Errors = new Dictionary<string, string[]>
+                {
+                    { "Error", new[] { invalidOpException.Message } }
+                };
             }
             else
             {

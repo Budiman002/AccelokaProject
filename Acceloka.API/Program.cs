@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Information()
     .WriteTo.File(
-        path: "logs/Log-.txt",
+        path: "logs/Log-.txt", // to Generates Log-{Date}.txt format like the req ask for (e.g., Log-20260211.txt) 
         rollingInterval: RollingInterval.Day,
         outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
     .CreateLogger();
